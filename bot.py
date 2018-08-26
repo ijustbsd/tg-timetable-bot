@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import calendar
 import datetime
 import locale
+import os
 
 import telebot
 import yaml
 
-locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
-
-bot = telebot.TeleBot('TOKEN')
+bot = telebot.TeleBot(os.environ['TOKEN'])
 
 main_btns = ('📘 Cегодня', '📗 Завтра', '📅 Расписание на другие дни', '🔔 Расписание звонков')
 week_btns = ('Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Суббота', 'Воскресенье')
@@ -39,10 +37,7 @@ def today_timetable(message):
     today = datetime.date.today() + datetime.timedelta(days=tomorrow)
     is_numerator = today.isocalendar()[1] % 2
     text = '*Расписание на {}:*\n'.format(message.text[2:].lower())
-    try:
-        text += '\n'.join(timetable[today.strftime("%a")][is_numerator])
-    except KeyError:
-        text += '\n'.join(timetable[today.strftime("%A")][is_numerator])
+    text += '\n'.join(timetable[today.strftime("%A")][is_numerator])
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
@@ -55,9 +50,10 @@ def week_msg(message):
 def week_timetable(message):
     with open('timetable.yml', 'r') as f:
         timetable = yaml.load(f)
-    weekday = calendar.day_name[week_btns.index(message.text)].lower()
-    text = '*Расписание на {}:*\n'.format(weekday if weekday[-1] != 'а' else weekday[:-1] + 'у')
-    timetable = timetable[message.text]
+    index = week_btns.index(message.text)
+    ru = ('понедельник', 'вторник', 'среду', 'четверг', 'пятницу', 'субботу', 'воскресенье')
+    text = '*Расписание на {}:*\n'.format(ru[index])
+    timetable = tuple(timetable.values())[index]
     if timetable[0] == timetable[1]:
         text += '\n'.join(timetable[0])
     else:
