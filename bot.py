@@ -23,6 +23,10 @@ week_markup.row(week_btns[5])
 week_markup.row(week_btns[6])
 
 
+def parser(src):
+    return ['{}\n`({}, {})`'.format(*x) if isinstance(x, list) else x for x in src]
+
+
 @bot.message_handler(commands=['start'])
 def welcome(message):
     text = 'Привет! Я помогу тебе узнать расписание, обращайся 😉'
@@ -37,7 +41,7 @@ def today_timetable(message):
     today = datetime.date.today() + datetime.timedelta(days=tomorrow)
     is_numerator = today.isocalendar()[1] % 2
     text = '*Расписание на {}:*\n'.format(message.text[2:].lower())
-    text += '\n'.join(timetable[today.strftime("%A")][is_numerator])
+    text += '\n'.join(parser(timetable[today.strftime("%A")][is_numerator]))
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
@@ -51,14 +55,14 @@ def week_timetable(message):
     with open('timetable.yml', 'r') as f:
         timetable = yaml.load(f)
     index = week_btns.index(message.text)
-    ru = ('понедельник', 'вторник', 'среду', 'четверг', 'пятницу', 'субботу', 'воскресенье')
-    text = '*Расписание на {}:*\n'.format(ru[index])
+    ru = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
+    text = '*{}:*\n'.format(ru[index])
     timetable = tuple(timetable.values())[index]
     if timetable[0] == timetable[1]:
-        text += '\n'.join(timetable[0])
+        text += '\n'.join(parser(timetable[0]))
     else:
-        text += '*Числитель:*\n{}\n\n'.format('\n'.join(timetable[0]))
-        text += '*Знаменатель*\n{}'.format('\n'.join(timetable[1]))
+        text += '*Числитель:*\n{}\n\n'.format('\n'.join(parser(timetable[0])))
+        text += '*Знаменатель*\n{}'.format('\n'.join(parser(timetable[1])))
     bot.send_message(message.chat.id, text, reply_markup=main_markup, parse_mode='Markdown')
 
 
