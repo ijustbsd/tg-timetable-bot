@@ -5,7 +5,7 @@ COPY exec.sh /bot/exec.sh
 
 RUN \
     chmod +x /bot/exec.sh && \
-    apk add --update --no-cache python3 tzdata && \
+    apk add --update --no-cache python3 tzdata cmd:pip3 && \
     pip3 install --upgrade pip && \
     pip3 install pyTelegramBotAPI pyyaml && \
     rm -rf /var/cache/apk/*
