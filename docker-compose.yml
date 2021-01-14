@@ -4,6 +4,6 @@ services:
     build: .
     restart: always
     volumes:
-      - ./timetable.yml:/bot/timetable.yml
+      - ./app:/app
     environment:
       - TOKEN=Your_Token
