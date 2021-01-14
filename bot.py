@@ -1,40 +1,42 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import locale
 import os
 
-import telebot
 import yaml
+from aiogram import Bot, Dispatcher, executor, types
 
-bot = telebot.TeleBot(os.environ['TOKEN'])
+API_TOKEN = os.getenv('TOKEN')
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
 
 main_btns = ('📘 Cегодня', '📗 Завтра', '📅 Расписание на другие дни', '🔔 Расписание звонков')
 week_btns = ('Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Суббота', 'Воскресенье')
 
-main_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-main_markup.row(*main_btns[:2])
-main_markup.row(main_btns[2])
-main_markup.row(main_btns[3])
+main_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+main_markup.row(*(types.KeyboardButton(text) for text in main_btns[:2]))
+main_markup.row(types.KeyboardButton(main_btns[2]))
+main_markup.row(types.KeyboardButton(main_btns[3]))
 
-week_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-week_markup.row(*week_btns[:5])
-week_markup.row(week_btns[5])
-week_markup.row(week_btns[6])
+week_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+week_markup.row(*(types.KeyboardButton(text) for text in week_btns[:5]))
+week_markup.row(types.KeyboardButton(week_btns[5]))
+week_markup.row(types.KeyboardButton(week_btns[6]))
 
 
 def parser(src):
     return ['{}\n`({}, {})`'.format(*x) if isinstance(x, list) else x for x in src]
 
 
-@bot.message_handler(commands=['start'])
-def welcome(message):
+@dp.message_handler(commands=['start'])
+async def welcome(message: types.Message):
     text = 'Привет! Я помогу тебе узнать расписание, обращайся 😉'
-    bot.send_message(message.chat.id, text, reply_markup=main_markup)
+    await bot.send_message(message.chat.id, text, reply_markup=main_markup)
 
 
-@bot.message_handler(func=lambda msg: msg.text in main_btns[:2])
-def today_timetable(message):
+@dp.message_handler(text=main_btns[:2])
+async def today_timetable(message: types.Message):
     with open('timetable.yml', 'r') as f:
         timetable = yaml.load(f)
     tomorrow = message.text == main_btns[1]
@@ -42,16 +44,16 @@ def today_timetable(message):
     is_numerator = today.isocalendar()[1] % 2
     text = '*Расписание на {}:*\n'.format(message.text[2:].lower())
     text += '\n'.join(parser(timetable[today.strftime("%A")][is_numerator]))
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
+    await bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda msg: msg.text == main_btns[2])
-def week_msg(message):
-    bot.send_message(message.chat.id, 'Выберите день недели:', reply_markup=week_markup)
+@dp.message_handler(text=[main_btns[2]])
+async def week_msg(message: types.Message):
+    await bot.send_message(message.chat.id, 'Выберите день недели:', reply_markup=week_markup)
 
 
-@bot.message_handler(func=lambda msg: msg.text in week_btns)
-def week_timetable(message):
+@dp.message_handler(text=week_btns)
+async def week_timetable(message: types.Message):
     with open('timetable.yml', 'r') as f:
         timetable = yaml.load(f)
     index = week_btns.index(message.text)
@@ -63,11 +65,11 @@ def week_timetable(message):
     else:
         text += '*Числитель:*\n{}\n\n'.format('\n'.join(parser(timetable[0])))
         text += '*Знаменатель*\n{}'.format('\n'.join(parser(timetable[1])))
-    bot.send_message(message.chat.id, text, reply_markup=main_markup, parse_mode='Markdown')
+    await bot.send_message(message.chat.id, text, reply_markup=main_markup, parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda msg: msg.text == main_btns[3])
-def bells_msg(message):
+@dp.message_handler(text=[main_btns[3]])
+async def bells_msg(message: types.Message):
     text = (
         '*Расписание звонков:*\n'
         '1. 8:00 - 9:35\n'
@@ -78,12 +80,13 @@ def bells_msg(message):
         '6. 16:55 - 18:30\n'
         '7. 18:40 - 20:00\n'
         '8. 20:10 - 21:30\n')
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
+    await bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda msg: True)
-def error_msg(message):
-    bot.reply_to(message, 'К сожалению, я тебя не понимаю 😢', reply_markup=main_markup)
+@dp.message_handler()
+async def error_msg(message: types.Message):
+    await message.answer('К сожалению, я тебя не понимаю 😢', reply_markup=main_markup)
 
 
-bot.polling()
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
