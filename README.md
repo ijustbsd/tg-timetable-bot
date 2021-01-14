@@ -3,4 +3,4 @@
 * Измените токен бота в файле `docker-compose.yml`.
 * Запустите бота: `docker-compose up -d`.
 
-Редактировать расписание "на лету" можно в файле `timetable.yml`.
+Редактировать расписание "на лету" можно в файле [timetable.yml](app/timetable.yml).
