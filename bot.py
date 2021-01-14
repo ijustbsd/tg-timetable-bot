@@ -38,7 +38,7 @@ async def welcome(message: types.Message):
 @dp.message_handler(text=main_btns[:2])
 async def today_timetable(message: types.Message):
     with open('timetable.yml', 'r') as f:
-        timetable = yaml.load(f)
+        timetable = yaml.safe_load(f)
     tomorrow = message.text == main_btns[1]
     today = datetime.date.today() + datetime.timedelta(days=tomorrow)
     is_numerator = today.isocalendar()[1] % 2
@@ -55,7 +55,7 @@ async def week_msg(message: types.Message):
 @dp.message_handler(text=week_btns)
 async def week_timetable(message: types.Message):
     with open('timetable.yml', 'r') as f:
-        timetable = yaml.load(f)
+        timetable = yaml.safe_load(f)
     index = week_btns.index(message.text)
     ru = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
     text = '*{}:*\n'.format(ru[index])
