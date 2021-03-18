@@ -41,7 +41,7 @@ async def today_timetable(message: types.Message):
         timetable = yaml.safe_load(f)
     tomorrow = message.text == main_btns[1]
     today = datetime.date.today() + datetime.timedelta(days=tomorrow)
-    is_numerator = today.isocalendar()[1] % 2
+    is_numerator = not today.isocalendar()[1] % 2
     text = '*Расписание на {}:*\n'.format(message.text[2:].lower())
     text += '\n'.join(parser(timetable[today.strftime("%A")][is_numerator]))
     await bot.send_message(message.chat.id, text, parse_mode='Markdown')
